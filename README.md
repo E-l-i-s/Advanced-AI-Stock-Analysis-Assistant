@@ -1,116 +1,38 @@
-# FinSight AI — Intelligent Stock Analysis Assistant
+# stock analysis assistant
 
-[![Python 3.12](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-1.0.0-009688.svg)](https://fastapi.tiangolo.com/)
-[![React 19](https://img.shields.io/badge/React-19-61dafb.svg)](https://react.dev/)
-[![Thesys C1](https://img.shields.io/badge/Thesys-GenUI%20C1-purple.svg)](https://thesys.dev/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+## Features
 
-An advanced, full-stack AI stock analysis platform that doesn't just respond with text and numbers—it dynamically renders **interactive Generative User Interfaces (GenUI)** on the fly. Users can prompt the assistant for price trends, fundamental balance sheets, latest company news, and comparative ticker evaluations, receiving real-time charts, metric cards, and actionable follow-up widgets.
-
----
-
-## 🏛️ System Architecture
-
-```mermaid
-graph TD
-    User([User / Browser]) <-->|React 19 + Thesys C1| Frontend[Frontend SPA: Vite :3000]
-    Frontend <-->|SSE Streaming /api/chat| Backend[FastAPI Backend :8888]
-    Backend <-->|Agent Tool Calls| YFinance[Yahoo Finance API]
-    Backend <-->|Model Inference & GenUI XML| Thesys[Thesys C1 Engine / GPT-5]
-    Backend <-->|Checkpointer| Memory[LangGraph InMemorySaver]
-```
-
-### Key Components
-
-1. **Backend Service (`/backend`)**:
-   - Built on **FastAPI** with Server-Sent Events (`text/event-stream`) streaming.
-   - **LangChain** agent powered by Thesys C1 (`c1/openai/gpt-5/v-20250930`).
-   - Multi-turn conversation state persistence via **LangGraph** `InMemorySaver`.
-   - Real-time financial tools powered by **Yahoo Finance (`yfinance`)**:
-     - `get_stock_price`: Live quote, daily change, and previous close.
-     - `get_historical_stock_price`: Time-series OHLCV price history across date ranges.
-     - `get_balance_sheet`: Fundamental assets, liabilities, and equity statements.
-     - `get_stock_news`: Latest market and analyst headlines.
-     - `get_company_profile`: Corporate background, market cap, and valuation multiples.
-
-2. **Frontend Application (`/frontend`)**:
-   - Built with **React 19**, **TypeScript**, and **Vite**.
-   - Integrates **`@thesysai/genui-sdk`** (`C1Chat`, `ThemeProvider`) and **`@crayonai/react-ui`**.
-   - Includes real-time backend health status monitoring, prompt suggestion chips, and responsive dark glassmorphic UI.
+- **Interactive Generative UI**: Renders real-time interactive charts, buttons, valuation forms, and metrics directly within the chat stream.
+- **Live Backend Health Monitor**: Automatically checks backend connectivity and API key status on launch.
+- **Quick Inquiries Bar**: One-click prompt inspiration chips (e.g., Comparing tickers, Balance sheets, News feeds, Historical charts) with clipboard copy feedback.
+- **Dark Mode UI**: Sleek, institutional-grade dark interface styling with glassmorphism and subtle gradients.
+- **Local Dev Proxy**: Configured Vite proxy routing `/api` calls directly to `http://localhost:8888`.
 
 ---
 
-## 🚀 Quick Start Guide
+## Getting Started
 
-### Step 1: Clone and Configure Environment
-
-1. Obtain a free API key at [thesys.dev](https://thesys.dev) (Console -> API Keys).
-2. Create `backend/.env` based on `backend/.env.example`:
-   ```env
-   THESYS_API_KEY=your_thesys_api_key_here
-   ```
-
----
-
-### Step 2: Start the Backend
-
+### 1. Install Dependencies
 ```bash
-cd backend
-
-# Install dependencies (using uv or pip)
-uv sync
-
-# Run the server
-uv run python main.py
-```
-*The backend starts at `http://localhost:8888`.*
-
----
-
-### Step 3: Start the Frontend
-
-Open a second terminal window:
-
-```bash
-cd frontend
-
-# Install dependencies
 npm install
+```
 
-# Start Vite dev server
+### 2. Start Development Server
+```bash
 npm run dev
 ```
-*The frontend dashboard will be live at `http://localhost:3000`.*
+The app will launch at `http://localhost:3000`.
+
+### 3. Build for Production
+```bash
+npm run build
+```
+Generates optimized production assets in the `dist/` directory.
 
 ---
 
-## 💡 Example Prompt Inquiries
+## Architecture & Proxy Configuration
 
-- **Comparative Analysis**: *"Compare Nvidia (NVDA) and AMD in terms of stock performance and valuation metrics."*
-- **Historical Charting**: *"Plot the historical closing price of Tesla (TSLA) over the past 6 months."*
-- **Fundamental Breakdown**: *"Show me the latest balance sheet statement of Apple (AAPL)."*
-- **Market News**: *"What is the latest news and market sentiment for Microsoft (MSFT)?"*
-- **Company Overview**: *"Give me a profile, industry breakdown, and P/E ratio for Amazon (AMZN)."*
-
----
-
-## 📁 Repository Structure
-
-```
-├── backend/
-│   ├── main.py            # FastAPI application & LangChain financial agent
-│   ├── pyproject.toml     # Python dependencies & project metadata
-│   ├── .env.example       # Example environment variables template
-│   └── README.md          # In-depth backend documentation
-├── frontend/
-│   ├── src/
-│   │   ├── App.tsx        # Main application component & header
-│   │   ├── App.css        # Custom styling & dark theme tokens
-│   │   └── main.tsx       # React entry point
-│   ├── index.html         # Document template with modern fonts
-│   ├── vite.config.ts     # Vite configuration with API proxy
-│   ├── package.json       # Frontend scripts and dependencies
-│   └── README.md          # Frontend documentation
-└── README.md              # Project overview & submission guide
-```
+The frontend communicates with the backend via Vite's proxy configured in `vite.config.ts`:
+- Requests to `/api/*` are automatically forwarded to `http://localhost:8888`.
+- Server-Sent Events (SSE) stream tokens directly into the `C1Chat` component.
