@@ -1,82 +1,107 @@
 # FinSight AI — Stock Analysis Assistant (Backend)
 
-The **FinSight AI Backend** is an asynchronous API service built with **FastAPI**, **LangChain**, and **Yahoo Finance (yfinance)**. It interfaces with **Thesys Generative UI (C1)** to deliver streaming conversational responses containing real-time charts, financial tables, and interactive UI widgets.
+The backend is a **FastAPI** service that runs a **LangChain** agent. The agent calls **Yahoo Finance (`yfinance`)** tools for market data and streams its replies as Server-Sent Events to the **Thesys C1** generative UI frontend.
 
 ---
 
 ## 🚀 Key Features
 
-- **Asynchronous Streaming**: Streams Server-Sent Events (SSE) token-by-token directly to the generative UI frontend.
-- **Dynamic Financial Tools**:
-  - `get_stock_price`: Fetches real-time price quotes, intraday movements, and previous close.
-  - `get_historical_stock_price`: Fetches time-series price data across configurable start/end ranges.
-  - `get_balance_sheet`: Extracts balance sheet financial statements (assets, liabilities, shareholder equity) with formatted timestamps.
-  - `get_stock_news`: Retrieves the latest company headlines, publishers, and publication timestamps.
-  - `get_company_profile`: Retrieves corporate background, sector, industry, PE ratios, market cap, and 52-week ranges.
-- **Stateful Thread Management**: Uses LangGraph's `InMemorySaver` checkpointer to maintain conversational context across multiple turns.
-- **Resilient Fallbacks**: Sanitized ticker symbol handling and graceful error handling prevent tool exceptions from interrupting chat sessions.
+- **Streaming responses**: `POST /api/chat` streams the agent's text tokens as `text/event-stream`.
+- **Financial tools** (all in `main.py`):
+  - `get_stock_price`: Latest close, previous close, dollar change, and percent change (from the last 5 trading days).
+  - `get_historical_stock_price`: Open/High/Low/Close/Volume for a `YYYY-MM-DD` start and end date.
+  - `get_balance_sheet`: Balance sheet line items for each reporting date.
+  - `get_stock_news`: Up to 6 recent headlines with publisher, link, and publish date.
+  - `get_company_profile`: Name, sector, industry, market cap, trailing and forward P/E, 52-week high and low, and a shortened business summary.
+- **Conversation memory**: LangGraph `InMemorySaver` keeps history per `threadId`. It lives in process memory and is lost when the server restarts.
+- **Error handling**: Tool errors are returned as `error` fields in the tool result instead of crashing the chat. Thesys 429 errors and missing API keys produce a readable message in the stream.
 
 ---
 
 ## 🛠️ Tech Stack
 
 - **Python 3.12+**
-- **FastAPI** (Web framework & SSE streaming)
+- **FastAPI** (web framework and SSE streaming)
 - **Uvicorn** (ASGI server)
-- **LangChain & LangGraph** (Agent orchestration & memory checkpointer)
-- **Thesys C1 Model** (`c1/openai/gpt-5/v-20250930` via `https://api.thesys.dev/v1/embed/`)
-- **Yahoo Finance (`yfinance`)** (Market data provider)
-- **Pydantic v2** (Payload serialization and validation)
+- **LangChain** (`create_agent`, `langchain-openai`) and **LangGraph** (checkpointer)
+- **Thesys C1** via `https://api.thesys.dev/v1/embed/` (OpenAI-compatible API)
+- **yfinance** (market data)
+- **python-dotenv** (loads `.env`)
+- **Pydantic v2** (request models)
 
 ---
 
 ## ⚙️ Installation & Setup
 
 ### 1. Prerequisites
-Ensure you have **Python 3.12+** and **uv** (or standard `pip` / `venv`) installed.
+
+Install **Python 3.12+** and [uv](https://docs.astral.sh/uv/) (recommended):
 
 ```bash
-# If using uv (recommended):
 pip install uv
 ```
 
 ### 2. Configure Environment Variables
-Copy `.env.example` to `.env` in the `backend/` directory:
 
-```bash
-cp .env.example .env
-```
+There is no `.env.example` in the repo. Create `backend/.env` yourself:
 
-Edit `.env` to include your free Thesys API key:
 ```env
 THESYS_API_KEY=your_thesys_api_key_here
+
+# Optional
+# THESYS_MODEL=c1/google/gemini-3.1-flash-lite-free/v-20260331
+# HOST=0.0.0.0
+# PORT=8888
 ```
-*(Get your free API key at [thesys.dev](https://thesys.dev) -> Console -> API Keys)*
+
+- Get a free API key at [thesys.dev](https://thesys.dev) → Console → API Keys.
+- `OPENAI_API_KEY` is accepted as a fallback for `THESYS_API_KEY`.
+- The default model is `c1/google/gemini-3.1-flash-lite-free/v-20260331`. Paid models return HTTP 429 when the Thesys account has no credits.
 
 ### 3. Install Dependencies
+
 ```bash
 uv sync
-# OR with pip:
-# pip install -r pyproject.toml
 ```
 
-### 4. Start the Backend Server
+Dependencies are listed in `pyproject.toml` and pinned in `uv.lock`. The project has no build-system table, so use `uv sync` rather than `pip install .`.
+
+### 4. Start the Server
+
 ```bash
 uv run python main.py
 ```
-The API server will launch at `http://localhost:8888`.
+
+The server listens on `http://localhost:8888` and reloads on code changes. The `HOST` and `PORT` variables override the defaults.
 
 ---
 
 ## 📡 API Endpoints
 
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `GET` | `/` | Root endpoint displaying service status and available routes |
-| `GET` | `/api/health` | Health check endpoint returning backend and API key status |
-| `POST` | `/api/chat` | Asynchronous SSE streaming endpoint consumed by Thesys C1 |
+| Method | Endpoint      | Description                                                                 |
+| :----- | :------------ | :-------------------------------------------------------------------------- |
+| `GET`  | `/`           | Service name, version, `api_key_configured` flag, and endpoint list         |
+| `GET`  | `/api/health` | `status`, `api_key_configured` flag, and the active `model` name            |
+| `POST` | `/api/chat`   | Streams the assistant reply as `text/event-stream`                          |
+
+### `POST /api/chat` request body
+
+```json
+{
+  "prompt": { "content": "Show me Apple's balance sheet", "role": "user" },
+  "threadId": "any-unique-thread-id"
+}
+```
+
+- `prompt.content` (required): the user's message.
+- `threadId` (required): reuse the same value to continue a conversation.
+- `prompt.id`, `prompt.role`, and `responseId` are optional.
 
 ---
 
-## 🛡️ License & Submission Notice
-Developed for academic/portfolio evaluation as an advanced AI-driven stock intelligence platform.
+## 📁 Files
+
+- `main.py`: app, tools, agent, endpoints, and system prompt.
+- `pyproject.toml`: project metadata and dependencies.
+- `uv.lock`: locked dependency versions.
+- `.python-version`: Python version pin.
