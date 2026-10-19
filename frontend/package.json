@@ -1,8 +1,8 @@
 {
-  "name": "finsight-ai-frontend",
+  "name": "ai-stock-analysis-frontend",
   "private": true,
   "version": "1.0.0",
-  "description": "Interactive Generative UI Frontend for FinSight AI Stock Analysis Assistant",
+  "description": "Interactive Generative UI Frontend for the AI Stock Analysis Assistant",
   "type": "module",
   "scripts": {
     "dev": "vite",

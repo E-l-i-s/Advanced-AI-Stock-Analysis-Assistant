@@ -1,4 +1,4 @@
-# FinSight AI — Stock Analysis Assistant (Backend)
+# AI Stock Analysis Assistant (Backend)
 
 The backend is a **FastAPI** service that runs a **LangChain** agent. The agent calls **Yahoo Finance (`yfinance`)** tools for market data and streams its replies as Server-Sent Events to the **Thesys C1** generative UI frontend.
 
@@ -11,7 +11,7 @@ The backend is a **FastAPI** service that runs a **LangChain** agent. The agent 
   - `get_stock_price`: Latest close, previous close, dollar change, and percent change (from the last 5 trading days).
   - `get_historical_stock_price`: Open/High/Low/Close/Volume for a `YYYY-MM-DD` start and end date.
   - `get_balance_sheet`: Balance sheet line items for each reporting date.
-  - `get_stock_news`: Up to 6 recent headlines with publisher, link, and publish date.
+  - `get_stock_news`: Up to 6 recent headlines with publisher, link, and a raw publish timestamp.
   - `get_company_profile`: Name, sector, industry, market cap, trailing and forward P/E, 52-week high and low, and a shortened business summary.
 - **Conversation memory**: LangGraph `InMemorySaver` keeps history per `threadId`. It lives in process memory and is lost when the server restarts.
 - **Error handling**: Tool errors are returned as `error` fields in the tool result instead of crashing the chat. Thesys 429 errors and missing API keys produce a readable message in the stream.

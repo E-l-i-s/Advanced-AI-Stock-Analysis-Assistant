@@ -1,4 +1,4 @@
-# FinSight AI — Generative UI Dashboard (Frontend)
+# AI Stock Analysis Assistant (Frontend)
 
 The frontend is a single-page app built with **React 19**, **TypeScript**, and **Vite**. It shows the **Thesys C1Chat** component, which renders the backend's generative UI replies (charts, tables, metric cards, and buttons) in a chat thread.
 

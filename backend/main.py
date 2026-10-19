@@ -1,5 +1,5 @@
 """
-FinSight AI — Intelligent Financial Market & Stock Analysis Assistant
+AI Stock Analysis Assistant — Intelligent Financial Market & Stock Analysis
 Backend service built with FastAPI, LangChain, and Thesys Generative UI (C1).
 """
 
@@ -28,7 +28,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
 )
-logger = logging.getLogger("finsight-backend")
+logger = logging.getLogger("stock-analysis-backend")
 
 # Load environment variables explicitly from backend/.env and current directory
 backend_dir = os.path.dirname(os.path.abspath(__file__))
@@ -230,7 +230,7 @@ financial_agent = create_agent(
 # ============================================================================
 
 app = FastAPI(
-    title="FinSight AI Stock Analysis Assistant API",
+    title="AI Stock Analysis Assistant API",
     version="1.0.0",
     description="Intelligent financial market analysis with interactive Generative UI powered by LangChain and Thesys C1."
 )
@@ -270,7 +270,7 @@ def get_api_key() -> Optional[str]:
 async def root():
     """Service status and endpoint directory."""
     return {
-        "service": "FinSight AI Stock Analysis Assistant",
+        "service": "AI Stock Analysis Assistant",
         "status": "online",
         "version": "1.0.0",
         "api_key_configured": bool(get_api_key()),
@@ -292,7 +292,7 @@ async def health_check():
 
 
 SYSTEM_PROMPT = (
-    "You are FinSight AI, an elite financial research and stock market analysis assistant. "
+    "You are an elite financial research and stock market analysis assistant. "
     "You provide institutional-grade stock intelligence, financial visualizations, comparative valuations, "
     "and corporate health breakdowns. "
     "You have real-time access to Yahoo Finance tools for: "
@@ -388,5 +388,5 @@ async def chat(request: RequestObject):
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8888))
     host = os.getenv("HOST", "0.0.0.0")
-    logger.info(f"Starting FinSight AI backend server on {host}:{port}")
+    logger.info(f"Starting AI Stock Analysis Assistant backend server on {host}:{port}")
     uvicorn.run("main:app", host=host, port=port, reload=True)

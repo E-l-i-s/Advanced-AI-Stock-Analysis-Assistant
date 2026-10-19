@@ -1,10 +1,10 @@
 [project]
-name = "finsight-ai-stock-assistant"
+name = "ai-stock-analysis-assistant"
 version = "1.0.0"
 description = "Advanced AI Stock Analysis Assistant with Generative UI powered by FastAPI, LangChain, and Thesys C1"
 readme = "README.md"
 authors = [
-    { name = "FinSight AI Team" }
+    { name = "AI Stock Analysis Assistant Team" }
 ]
 requires-python = ">=3.12"
 dependencies = [
