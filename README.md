@@ -1,4 +1,4 @@
-# FinSight AI — Stock Analysis Assistant
+# AI Stock Analysis Assistant
 
 An AI-powered stock research assistant. Ask about a ticker in natural language and get live market data, historical price charts, balance sheets, news, and company profiles rendered as generative UI (charts, tables, metric cards, and follow-up buttons) by **Thesys C1**.
 
