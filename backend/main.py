@@ -4,6 +4,7 @@ Backend service built with FastAPI, LangChain, and Thesys Generative UI (C1).
 """
 
 import os
+import math
 import logging
 from typing import Optional, Dict, Any, List
 from dotenv import load_dotenv
@@ -121,6 +122,17 @@ def get_historical_stock_price(ticker: str, start_date: str, end_date: str) -> D
         return {"ticker": clean_ticker, "error": f"Failed to retrieve historical data: {str(exc)}"}
 
 
+def _json_safe_number(val: Any) -> Optional[float]:
+    """Convert a value to float, mapping missing/NaN values to None (NaN is not valid JSON)."""
+    if val is None:
+        return None
+    try:
+        number = float(val)
+    except (TypeError, ValueError):
+        return None
+    return None if math.isnan(number) else number
+
+
 @tool("get_balance_sheet", description="Retrieves the fundamental balance sheet statement containing assets, liabilities, and equity for a given stock ticker.")
 def get_balance_sheet(ticker: str) -> Dict[str, Any]:
     """Fetch balance sheet financial statement data for the requested ticker."""
@@ -137,7 +149,7 @@ def get_balance_sheet(ticker: str) -> Dict[str, Any]:
         for col in bs.columns:
             date_key = col.strftime("%Y-%m-%d") if hasattr(col, "strftime") else str(col)
             formatted_bs[date_key] = {
-                str(metric): (None if (val is None or (hasattr(val, "isna") and val.isna())) else float(val))
+                str(metric): _json_safe_number(val)
                 for metric, val in bs[col].items()
             }
         return {"ticker": clean_ticker, "balance_sheet": formatted_bs}
@@ -152,8 +164,9 @@ def get_stock_news(ticker: str) -> List[Dict[str, Any]]:
     clean_ticker = ticker.strip().upper()
     logger.info(f"Invoking get_stock_news for ticker: {clean_ticker}")
     try:
-        stock = yf.Ticker(clean_ticker)
-        raw_news = stock.news
+        # Ticker.news currently returns an empty list for many tickers in yfinance 0.2.66;
+        # yf.Search returns the same headlines, so use it first and fall back to Ticker.news.
+        raw_news = yf.Search(clean_ticker, news_count=6).news or yf.Ticker(clean_ticker).news
         if not raw_news:
             return [{"title": f"No recent headlines found for {clean_ticker}", "publisher": "Yahoo Finance"}]
         
@@ -190,7 +203,7 @@ def get_company_profile(ticker: str) -> Dict[str, Any]:
             "forward_pe": info.get("forwardPE"),
             "fifty_two_week_high": info.get("fiftyTwoWeekHigh"),
             "fifty_two_week_low": info.get("fiftyTwoWeekLow"),
-            "summary": info.get("longBusinessSummary", "No overview available.")[:350] + "..."
+            "summary": (info.get("longBusinessSummary") or "No overview available.")[:350] + "..."
         }
     except Exception as exc:
         logger.error(f"Error retrieving company profile for {clean_ticker}: {exc}")
@@ -226,7 +239,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

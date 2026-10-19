@@ -110,7 +110,7 @@ If no API key is configured, `/api/chat` streams a setup message instead of call
 │   │   ├── App.tsx        # Main component: quick-prompt bar and C1Chat
 │   │   ├── App.css        # Dark theme styles and chat layout overrides
 │   │   └── main.tsx       # React entry point
-│   ├── index.html         # HTML template (fonts, favicon, title)
+│   ├── index.html         # HTML template (fonts, title)
 │   ├── vite.config.ts     # Vite config: port 3000 and /api proxy
 │   ├── eslint.config.js   # ESLint configuration
 │   ├── tsconfig*.json     # TypeScript configuration
