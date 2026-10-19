@@ -122,6 +122,3 @@ If no API key is configured, `/api/chat` streams a setup message instead of call
 
 ---
 
-## Disclaimer
-
-This project is for research and educational purposes. Market data comes from Yahoo Finance via `yfinance` and may be delayed or incomplete. It is not investment advice.
